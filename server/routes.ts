@@ -59,6 +59,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { messages, sessionId } = chatRequestSchema.parse(req.body);
 
+       // Get OpenAI API key from environment
+      const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY;
+      
+      if (!OPENAI_API_KEY) {
+        return res.status(500).json({ 
+          error: 'OpenAI API key not configured. Please contact support.' 
+        });
+      }
+      
       // Get or create chat session
       let session = await storage.getChatSession(sessionId);
       if (!session) {
@@ -70,15 +79,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: msg.role,
         content: String(msg.content).slice(0, 1000) // Limit message length
       }));
-
-      // Get OpenAI API key from environment
-      const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY;
-      
-      if (!OPENAI_API_KEY) {
-        return res.status(500).json({ 
-          error: 'OpenAI API key not configured. Please contact support.' 
-        });
-      }
 
       // Save user message to storage
       if (sanitizedMessages.length > 0) {
